@@ -423,9 +423,10 @@ textarea { resize: vertical; min-height: 60px; }
             <th style="min-width:100px;">型番/品番</th>
             <th style="width:60px;">数量</th>
             <th style="width:60px;">単位</th>
-            <th style="width:110px;">単価（税抜）</th>
+            <th style="width:110px;">定価</th>
+            <th style="width:110px;">単価（見積）</th>
             <th style="width:110px;">小計</th>
-            <th style="width:90px;">原価 / 掛率</th>
+            <th style="width:100px;">原価 / 掛率</th>
             <th style="width:90px;">利益</th>
             <th style="width:30px;"></th>
           </tr>
@@ -589,23 +590,24 @@ function calcSubtotal(items) {
 }
 function calcProfit(items) {
   return items.reduce((s,i) => {
-    const sub = (parseFloat(i.qty)||0) * (parseFloat(i.price)||0);
+    const qty = parseFloat(i.qty)||0;
+    const sub = qty * (parseFloat(i.price)||0);
     let cost = 0;
     if (i.costMode === 'rate') {
-      cost = sub * ((parseFloat(i.costRate)||0) / 100);
+      cost = qty * (parseFloat(i.teika)||0) * ((parseFloat(i.costRate)||0) / 100);
     } else {
-      cost = (parseFloat(i.qty)||0) * (parseFloat(i.cost)||0);
+      cost = qty * (parseFloat(i.cost)||0);
     }
     return s + (sub - cost);
   }, 0);
 }
 function calcTotalCost(items) {
   return items.reduce((s,i) => {
-    const sub = (parseFloat(i.qty)||0) * (parseFloat(i.price)||0);
+    const qty = parseFloat(i.qty)||0;
     if (i.costMode === 'rate') {
-      return s + sub * ((parseFloat(i.costRate)||0) / 100);
+      return s + qty * (parseFloat(i.teika)||0) * ((parseFloat(i.costRate)||0) / 100);
     } else {
-      return s + (parseFloat(i.qty)||0) * (parseFloat(i.cost)||0);
+      return s + qty * (parseFloat(i.cost)||0);
     }
   }, 0);
 }
@@ -629,10 +631,11 @@ function updateTotals() {
 
   // 行ごとの小計・利益セルをその場で更新（再描画なし）
   items.forEach(item => {
-    const sub = (parseFloat(item.qty)||0) * (parseFloat(item.price)||0);
+    const qty = parseFloat(item.qty)||0;
+    const sub = qty * (parseFloat(item.price)||0);
     let profitVal = item.costMode === 'rate'
-      ? sub * (1 - (parseFloat(item.costRate)||0) / 100)
-      : sub - (parseFloat(item.qty)||0) * (parseFloat(item.cost)||0);
+      ? sub - qty * (parseFloat(item.teika)||0) * ((parseFloat(item.costRate)||0) / 100)
+      : sub - qty * (parseFloat(item.cost)||0);
     const subEl = document.getElementById('sub-' + item.id);
     const profEl = document.getElementById('prof-' + item.id);
     if (subEl) subEl.textContent = '¥' + fmt(sub);
@@ -648,7 +651,7 @@ let itemRows = [];
 
 function addItem(data) {
   const id = Date.now() + Math.random();
-  const item = data || { id, name:'', spec:'', model:'', qty:1, unit:'個', price:'', costMode:'cost', cost:'', costRate:'' };
+  const item = data || { id, name:'', spec:'', model:'', qty:1, unit:'個', teika:'', price:'', costMode:'cost', cost:'', costRate:'' };
   itemRows.push(item.id !== undefined ? item : {...item, id});
   renderItems();
 }
@@ -662,12 +665,13 @@ function removeItem(id) {
 function renderItems() {
   const tbody = document.getElementById('items-body');
   tbody.innerHTML = itemRows.map((item, idx) => {
-    const sub = (parseFloat(item.qty)||0) * (parseFloat(item.price)||0);
+    const qty = parseFloat(item.qty)||0;
+    const sub = qty * (parseFloat(item.price)||0);
     let profitVal = 0;
     if (item.costMode === 'rate') {
-      profitVal = sub * (1 - (parseFloat(item.costRate)||0) / 100);
+      profitVal = sub - qty * (parseFloat(item.teika)||0) * ((parseFloat(item.costRate)||0) / 100);
     } else {
-      profitVal = sub - (parseFloat(item.qty)||0) * (parseFloat(item.cost)||0);
+      profitVal = sub - qty * (parseFloat(item.cost)||0);
     }
     const isCostMode = item.costMode !== 'rate';
     return `<tr data-id="${item.id}">
@@ -677,16 +681,17 @@ function renderItems() {
       <td><input type="text" value="${escAttr(item.model)}" placeholder="型番" onchange="updateItemField(${item.id},'model',this.value)" oninput="updateItemField(${item.id},'model',this.value)"></td>
       <td><input type="number" value="${item.qty}" min="0" style="text-align:right;" onchange="updateItemField(${item.id},'qty',this.value);updateItemRow(${item.id})" oninput="updateItemField(${item.id},'qty',this.value);updateTotals()"></td>
       <td><input type="text" value="${escAttr(item.unit)}" placeholder="個" onchange="updateItemField(${item.id},'unit',this.value)"></td>
+      <td><input type="number" value="${item.teika}" min="0" style="text-align:right;" placeholder="0" onchange="updateItemField(${item.id},'teika',this.value);updateItemRow(${item.id})" oninput="updateItemField(${item.id},'teika',this.value);updateTotals()"></td>
       <td><input type="number" value="${item.price}" min="0" style="text-align:right;" placeholder="0" onchange="updateItemField(${item.id},'price',this.value);updateItemRow(${item.id})" oninput="updateItemField(${item.id},'price',this.value);updateTotals()"></td>
       <td class="subtotal-cell" id="sub-${item.id}">¥${fmt(sub)}</td>
       <td class="profit-cell">
         <select style="font-size:11px;padding:2px;border:1px solid var(--border);border-radius:4px;margin-bottom:3px;" onchange="updateItemField(${item.id},'costMode',this.value);renderItems();updateTotals()">
-          <option value="cost" ${isCostMode?'selected':''}>原価（円）</option>
-          <option value="rate" ${!isCostMode?'selected':''}>掛率（%）</option>
+          <option value="cost" ${isCostMode?'selected':''}>原価（円/個）</option>
+          <option value="rate" ${!isCostMode?'selected':''}>定価×掛率（%）</option>
         </select><br>
         ${isCostMode
           ? `<input type="number" value="${item.cost}" min="0" style="text-align:right;" placeholder="原価/個" onchange="updateItemField(${item.id},'cost',this.value);updateItemRow(${item.id})" oninput="updateItemField(${item.id},'cost',this.value);updateTotals()">`
-          : `<input type="number" value="${item.costRate}" min="0" max="100" style="text-align:right;" placeholder="0〜100" onchange="updateItemField(${item.id},'costRate',this.value);updateItemRow(${item.id})" oninput="updateItemField(${item.id},'costRate',this.value);updateTotals()">%`
+          : `<input type="number" value="${item.costRate}" min="0" max="100" style="text-align:right;" placeholder="掛率%" onchange="updateItemField(${item.id},'costRate',this.value);updateItemRow(${item.id})" oninput="updateItemField(${item.id},'costRate',this.value);updateTotals()">%`
         }
       </td>
       <td class="subtotal-cell" id="prof-${item.id}" style="color:${profitVal>=0?'var(--green)':'var(--red)'};">¥${fmt(Math.round(profitVal))}</td>
