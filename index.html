@@ -882,14 +882,6 @@ function buildPrintDoc() {
   document.getElementById('print-doc').innerHTML = `
     <div class="print-header">
       <div></div>
-      ${companyHtml}
-    </div>
-    <div class="doc-title">御　見　積　書</div>
-    <div class="doc-meta">
-      <div>
-        <div class="doc-client-label">お見積り先</div>
-        <div class="doc-client">${escHtml(client||'')} 御中</div>
-      </div>
       <div>
         <table class="doc-info-table">
           <tr><td class="ilabel">見積番号</td><td>${escHtml(number||'')}</td></tr>
@@ -897,6 +889,14 @@ function buildPrintDoc() {
           <tr><td class="ilabel">有効期限</td><td>${fmtDate(valid)}</td></tr>
         </table>
       </div>
+    </div>
+    <div class="doc-title">御　見　積　書</div>
+    <div class="doc-meta">
+      <div>
+        <div class="doc-client-label">お見積り先</div>
+        <div class="doc-client">${escHtml(client||'')} 御中</div>
+      </div>
+      ${companyHtml}
     </div>
     <div class="doc-subject">
       <div class="subject-label">件　名</div>
