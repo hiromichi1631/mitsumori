@@ -190,6 +190,9 @@ body { font-family: "Hiragino Kaku Gothic ProN", Meiryo, sans-serif; background:
     <div class="fld"><label>年月日</label>
       <input type="date" id="i-date" oninput="upd()">
     </div>
+    <div class="fld"><label>見積者（社名・屋号など）</label>
+      <input type="text" id="i-quoter" placeholder="○○商事" oninput="upd()">
+    </div>
     <div class="fld"><label>住所</label>
       <input type="text" id="i-address" placeholder="茨城県○○市…" oninput="upd()">
     </div>
@@ -294,7 +297,7 @@ body { font-family: "Hiragino Kaku Gothic ProN", Meiryo, sans-serif; background:
       <td colspan="10" rowspan="4"
           class="nb" style="border-right:.5pt solid #000;"></td>
       <td colspan="8"
-          style="height:5.5mm;font-size:9pt;">見　積　者</td>
+          style="height:5.5mm;font-size:9pt;">見　積　者　<span id="p-quoter" style="font-size:8.5pt;"></span></td>
     </tr>
     <tr>
       <td colspan="8"
@@ -557,6 +560,8 @@ function upd() {
   /* 基本情報 */
   document.getElementById('p-date').textContent =
     fmtDate(document.getElementById('i-date').value);
+  document.getElementById('p-quoter').textContent =
+    document.getElementById('i-quoter').value;
   document.getElementById('p-address').textContent =
     document.getElementById('i-address').value;
   document.getElementById('p-name').textContent =
