@@ -344,10 +344,8 @@ body { font-family: "Hiragino Kaku Gothic ProN", Meiryo, sans-serif; background:
 
     <!-- 金額桁ヘッダ -->
     <tr>
-      <td rowspan="2" class="c"
+      <td colspan="2" rowspan="2" class="c"
           style="font-size:12pt;font-weight:bold;">金</td>
-      <td rowspan="2" class="c"
-          style="font-size:13pt;font-weight:bold;">¥</td>
       <td class="c" style="font-size:8pt;">千</td>
       <td class="c" style="font-size:8pt;">百</td>
       <td class="c" style="font-size:8pt;">十</td>
@@ -547,11 +545,32 @@ function fmtDate(d) {
 function setDigits(total) {
   const t = Math.min(Math.round(total), 99999999);
   const s = String(t).padStart(8, '0');
+
+  // 全セルをリセット
   for (let i = 0; i < 8; i++) {
-    // d0=円(1の位), d7=千万(最上位)
     const el = document.getElementById('d' + i);
-    const ch = s[7 - i];
-    el.textContent = (t >= Math.pow(10, i)) ? ch : '';
+    el.textContent = '';
+    el.style.fontSize = '13pt';
+  }
+
+  if (t === 0) return;
+
+  // 最上位の有効桁位置を探す（d7=千万位、d0=円位）
+  let firstPos = 0;
+  for (let i = 7; i >= 0; i--) {
+    if (s[7 - i] !== '0') { firstPos = i; break; }
+  }
+
+  // 有効桁をすべて表示
+  for (let i = 0; i <= firstPos; i++) {
+    document.getElementById('d' + i).textContent = s[7 - i];
+  }
+
+  // ¥ を最上位有効桁の1つ手前のセルに表示
+  if (firstPos < 7) {
+    const yenEl = document.getElementById('d' + (firstPos + 1));
+    yenEl.textContent = '¥';
+    yenEl.style.fontSize = '10pt';
   }
 }
 
