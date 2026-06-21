@@ -220,8 +220,6 @@ body { font-family: "Hiragino Kaku Gothic ProN", Meiryo, sans-serif; background:
     </div>
 
     <div class="tot">
-      <div class="trow"><span>小計（税抜）</span><span class="v" id="t-sub">¥0</span></div>
-      <div class="trow"><span>消費税（10%）</span><span class="v" id="t-tax">¥0</span></div>
       <div class="trow grand"><span>合計（税込）</span><span class="v" id="t-ttl">¥0</span></div>
     </div>
 
@@ -590,14 +588,10 @@ function upd() {
   }
 
   /* 合計 */
-  const tax   = Math.floor(sub * 0.1);
-  const total = sub + tax;
-  document.getElementById('t-sub').textContent = '¥' + jpy(sub);
-  document.getElementById('t-tax').textContent = '¥' + jpy(tax);
-  document.getElementById('t-ttl').textContent = '¥' + jpy(total);
+  document.getElementById('t-ttl').textContent = '¥' + jpy(sub);
 
   /* 金額桁 */
-  setDigits(total);
+  setDigits(sub);
 }
 
 /* ---- 初期化 ---- */
