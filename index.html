@@ -866,6 +866,7 @@ function buildPrintDoc() {
       ${settings.email ? `<div>${escHtml(settings.email)}</div>` : ''}
     </div>`;
 
+  const PRINT_ROWS = 10;
   const itemRows2 = items.map((item, idx) => {
     const sub = (parseFloat(item.qty)||0) * (parseFloat(item.price)||0);
     return `<tr>
@@ -879,6 +880,10 @@ function buildPrintDoc() {
       <td class="r">¥${fmt(sub)}</td>
     </tr>`;
   }).join('');
+  const emptyRows = Array.from({length: Math.max(0, PRINT_ROWS - items.length)}, (_, i) => `<tr style="height:28px;">
+      <td class="c" style="color:var(--border);">${items.length + i + 1}</td>
+      <td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+    </tr>`).join('');
 
   document.getElementById('print-doc').innerHTML = `
     <div class="print-header">
@@ -905,7 +910,7 @@ function buildPrintDoc() {
     </div>
     <table class="doc-items">
       <thead><tr><th>#</th><th>品名</th><th>規格</th><th>型番/品番</th><th>数量</th><th>単位</th><th>単価</th><th>金額</th></tr></thead>
-      <tbody>${itemRows2}</tbody>
+      <tbody>${itemRows2}${emptyRows}</tbody>
     </table>
     <div class="doc-totals">
       <table class="doc-totals-table">
