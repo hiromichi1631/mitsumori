@@ -256,6 +256,10 @@ textarea { resize: vertical; min-height: 60px; }
 .doc-info-table { font-size: 12px; }
 .doc-info-table td { padding: 2px 8px 2px 0; }
 .doc-info-table .ilabel { color: var(--text-sm); }
+.doc-estimate-total { display: flex; align-items: baseline; gap: 16px; margin: 16px 0 20px; padding: 10px 0; border-top: 1px solid #6b7280; border-bottom: 1px solid #6b7280; }
+.doc-estimate-total .et-label { font-size: 15px; font-weight: 700; white-space: nowrap; }
+.doc-estimate-total .et-amount { font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: 0.02em; }
+.doc-estimate-total .et-tax { font-size: 13px; color: #555; }
 .doc-subject { margin-bottom: 20px; }
 .doc-subject .subject-label { font-size: 12px; color: var(--text-sm); }
 .doc-subject .subject-val { font-size: 15px; font-weight: 600; margin-top: 2px; }
@@ -903,6 +907,11 @@ function buildPrintDoc() {
         <div class="doc-client">${escHtml(client||'')} 御中</div>
       </div>
       ${companyHtml}
+    </div>
+    <div class="doc-estimate-total">
+      <span class="et-label">お見積り額</span>
+      <span class="et-amount">¥${fmt(total)}</span>
+      <span class="et-tax">（税込）</span>
     </div>
     <div class="doc-subject">
       <div class="subject-label">件　名</div>
