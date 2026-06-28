@@ -337,6 +337,28 @@ textarea { resize: vertical; min-height: 60px; }
   .doc-header { flex-direction: column; }
   .doc-meta { flex-direction: column; }
 }
+.loading-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(255,255,255,.75); z-index: 9998;
+  align-items: center; justify-content: center; flex-direction: column; gap: 12px;
+}
+.loading-overlay.show { display: flex; }
+.spinner {
+  width: 36px; height: 36px;
+  border: 4px solid #e5e7eb; border-top-color: #2563eb;
+  border-radius: 50%; animation: spin .7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-overlay p { font-size: 14px; color: #6b7280; }
+.fb-toast {
+  position: fixed; bottom: 24px; right: 24px;
+  background: #1f2937; color: #fff;
+  padding: 10px 18px; border-radius: 8px;
+  font-size: 13px; box-shadow: 0 4px 14px rgba(0,0,0,.3);
+  z-index: 9999; opacity: 0; transform: translateY(8px);
+  transition: all .3s; pointer-events: none;
+}
+.fb-toast.show { opacity: 1; transform: none; }
 </style>
 </head>
 <body>
@@ -513,16 +535,50 @@ textarea { resize: vertical; min-height: 60px; }
   </div>
 </div>
 
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <p>読み込み中...</p>
+</div>
+<div class="fb-toast" id="fbToast"></div>
+
 <script>
 // ========== DATA ==========
-const DB_KEY = 'mitsumori_quotes';
+const QUOTES_URL = 'https://bid-manager-66484-default-rtdb.firebaseio.com/mitsumori_quotes.json';
 const SETTINGS_KEY = 'mitsumori_settings';
 let currentId = null;
+let quotes = [];
 
-function loadQuotes() {
-  try { return JSON.parse(localStorage.getItem(DB_KEY)) || []; } catch { return []; }
+function setLoading(v) {
+  document.getElementById('loadingOverlay').classList.toggle('show', v);
 }
-function saveQuotes(data) { localStorage.setItem(DB_KEY, JSON.stringify(data)); }
+function showToast(msg) {
+  const el = document.getElementById('fbToast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+async function loadFromFirebase() {
+  try {
+    const res = await fetch(QUOTES_URL);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    quotes = Array.isArray(data) ? data : [];
+  } catch {
+    quotes = [];
+    showToast('⚠ データの読み込みに失敗しました。接続を確認してください。');
+  }
+}
+function saveToFirebase() {
+  fetch(QUOTES_URL, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(quotes),
+  }).catch(() => showToast('⚠ クラウド保存に失敗しました。接続を確認してください。'));
+}
+
+function loadQuotes() { return quotes; }
+function saveQuotes(data) { quotes = data; saveToFirebase(); }
 function loadSettings() {
   try { return JSON.parse(localStorage.getItem(SETTINGS_KEY)) || {}; } catch { return {}; }
 }
@@ -1031,10 +1087,12 @@ function importData(event) {
 }
 
 // ========== INIT ==========
-(function init() {
+(async function init() {
+  setLoading(true);
+  await loadFromFirebase();
+  setLoading(false);
   const s = loadSettings();
   if (!s.company) {
-    // First run — open settings
     setTimeout(openSettings, 200);
   }
   showView('list');
